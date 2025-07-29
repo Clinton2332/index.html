@@ -1,5 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:video_player/video_player.dart';
 import '../widgets/video_call_ui.dart';
+import '../services/media_service.dart';
+import '../services/gallery_service.dart';
 
 class FakeCallScreen extends StatefulWidget {
   const FakeCallScreen({Key? key}) : super(key: key);
@@ -9,10 +14,46 @@ class FakeCallScreen extends StatefulWidget {
 }
 
 class _FakeCallScreenState extends State<FakeCallScreen> {
-  // TODO: Store selected caller, video, and recording state
-  // String? _callerName;
-  // File? _callerFace;
-  // File? _videoFile;
+  String? _callerName;
+  Widget? _callerFace;
+  File? _videoFile;
+  VideoPlayerController? _controller;
+  final MediaService _mediaService = MediaService();
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _selectCaller(BuildContext context) async {
+    final gallery = Provider.of<GalleryService>(context, listen: false);
+    if (gallery.faces.isNotEmpty) {
+      setState(() {
+        _callerFace = gallery.faces.first;
+        _callerName = 'Celebrity';
+      });
+    }
+  }
+
+  Future<void> _pickVideo() async {
+    final file = await _mediaService.pickVideo();
+    if (file != null) {
+      _controller?.dispose();
+      _controller = VideoPlayerController.file(file);
+      await _controller!.initialize();
+      setState(() {
+        _videoFile = file;
+      });
+      _controller!.play();
+    }
+  }
+
+  Future<void> _recordOrShare() async {
+    if (_videoFile != null) {
+      await _mediaService.shareMedia(_videoFile!);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,15 +67,11 @@ class _FakeCallScreenState extends State<FakeCallScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton(
-                  onPressed: () {
-                    // TODO: Select caller (face/name)
-                  },
+                  onPressed: () => _selectCaller(context),
                   child: const Text('Select Caller'),
                 ),
                 ElevatedButton(
-                  onPressed: () {
-                    // TODO: Pick or record video
-                  },
+                  onPressed: _pickVideo,
                   child: const Text('Pick Video'),
                 ),
               ],
@@ -43,15 +80,15 @@ class _FakeCallScreenState extends State<FakeCallScreen> {
             Expanded(
               child: Center(
                 child: VideoCallUI(
-                  // TODO: Pass caller and video info
+                  callerName: _callerName,
+                  callerFace: _callerFace,
+                  videoController: _controller,
                 ),
               ),
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () {
-                // TODO: Record/share the fake call
-              },
+              onPressed: _recordOrShare,
               child: const Text('Record/Share'),
             ),
             const SizedBox(height: 8),

@@ -1,23 +1,29 @@
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import 'package:share_plus/share_plus.dart';
+
 class MediaService {
-  // TODO: Integrate with camera, gallery, and share_plus
+  final ImagePicker _picker = ImagePicker();
 
-  Future<void> pickPhoto() async {
-    // Use image_picker or camera
+  Future<File?> pickPhoto() async {
+    final picked = await _picker.pickImage(source: ImageSource.gallery);
+    if (picked != null) {
+      return File(picked.path);
+    }
+    return null;
   }
 
-  Future<void> capturePhoto() async {
-    // Use camera
+  Future<File?> pickVideo() async {
+    final picked = await _picker.pickVideo(source: ImageSource.gallery);
+    if (picked != null) {
+      return File(picked.path);
+    }
+    return null;
   }
 
-  Future<void> pickVideo() async {
-    // Use image_picker or camera
+  Future<void> shareMedia(File file) async {
+    await Share.shareFiles([file.path]);
   }
 
-  Future<void> recordVideo() async {
-    // Use camera
-  }
-
-  Future<void> shareMedia(/* file */) async {
-    // Use share_plus
-  }
+  // TODO: Implement capturePhoto, recordVideo
 }

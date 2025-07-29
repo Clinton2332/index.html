@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 
 class VideoCallUI extends StatelessWidget {
-  // final String? callerName;
-  // final File? callerFace;
-  // final File? videoFile;
-  // Add these as parameters when integrating
+  final String? callerName;
+  final Widget? callerFace;
+  final VideoPlayerController? videoController;
 
-  const VideoCallUI({Key? key}) : super(key: key);
+  const VideoCallUI({Key? key, this.callerName, this.callerFace, this.videoController}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -27,13 +27,12 @@ class VideoCallUI extends StatelessWidget {
           CircleAvatar(
             radius: 36,
             backgroundColor: Colors.grey[300],
-            // backgroundImage: callerFace != null ? FileImage(callerFace!) : null,
-            child: const Icon(Icons.person, size: 40, color: Colors.black54),
+            child: callerFace ?? const Icon(Icons.person, size: 40, color: Colors.black54),
           ),
           const SizedBox(height: 12),
-          const Text(
-            'Caller Name', // Replace with callerName
-            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+          Text(
+            callerName ?? 'Caller Name',
+            style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 24),
           Expanded(
@@ -43,10 +42,14 @@ class VideoCallUI extends StatelessWidget {
                 color: Colors.grey[800],
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Center(
-                child: Icon(Icons.videocam, color: Colors.white54, size: 48),
-              ),
-              // TODO: Show video playback here
+              child: videoController != null && videoController!.value.isInitialized
+                  ? AspectRatio(
+                      aspectRatio: videoController!.value.aspectRatio,
+                      child: VideoPlayer(videoController!),
+                    )
+                  : const Center(
+                      child: Icon(Icons.videocam, color: Colors.white54, size: 48),
+                    ),
             ),
           ),
           const SizedBox(height: 16),

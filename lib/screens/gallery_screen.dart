@@ -1,9 +1,25 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/gallery_service.dart';
+import '../services/media_service.dart';
 
-class GalleryScreen extends StatelessWidget {
+class GalleryScreen extends StatefulWidget {
   const GalleryScreen({Key? key}) : super(key: key);
+
+  @override
+  State<GalleryScreen> createState() => _GalleryScreenState();
+}
+
+class _GalleryScreenState extends State<GalleryScreen> {
+  final MediaService _mediaService = MediaService();
+
+  Future<void> _uploadFace(BuildContext context) async {
+    final file = await _mediaService.pickPhoto();
+    if (file != null) {
+      Provider.of<GalleryService>(context, listen: false).addFaceImage(file);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,9 +33,7 @@ class GalleryScreen extends StatelessWidget {
             child: Row(
               children: [
                 ElevatedButton(
-                  onPressed: () {
-                    // TODO: Upload new face
-                  },
+                  onPressed: () => _uploadFace(context),
                   child: const Text('Upload Face'),
                 ),
                 const SizedBox(width: 16),
@@ -40,9 +54,9 @@ class GalleryScreen extends StatelessWidget {
                 crossAxisSpacing: 8,
                 mainAxisSpacing: 8,
               ),
-              itemCount: gallery.faces.length,
+              itemCount: gallery.faceImages.length,
               itemBuilder: (context, index) {
-                final face = gallery.faces[index];
+                final file = gallery.faceImages[index];
                 return GestureDetector(
                   onTap: () {
                     // TODO: Select face for swap
@@ -52,7 +66,7 @@ class GalleryScreen extends StatelessWidget {
                       border: Border.all(color: Colors.blueAccent),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: face,
+                    child: Image.file(file, fit: BoxFit.cover),
                   ),
                 );
               },
