@@ -13,8 +13,24 @@ class MediaService {
     return null;
   }
 
+  Future<File?> capturePhoto() async {
+    final picked = await _picker.pickImage(source: ImageSource.camera);
+    if (picked != null) {
+      return File(picked.path);
+    }
+    return null;
+  }
+
   Future<File?> pickVideo() async {
     final picked = await _picker.pickVideo(source: ImageSource.gallery);
+    if (picked != null) {
+      return File(picked.path);
+    }
+    return null;
+  }
+
+  Future<File?> recordVideo() async {
+    final picked = await _picker.pickVideo(source: ImageSource.camera);
     if (picked != null) {
       return File(picked.path);
     }
@@ -24,6 +40,4 @@ class MediaService {
   Future<void> shareMedia(File file) async {
     await Share.shareFiles([file.path]);
   }
-
-  // TODO: Implement capturePhoto, recordVideo
 }

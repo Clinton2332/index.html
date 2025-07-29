@@ -32,26 +32,51 @@ class _FaceSwapScreenState extends State<FaceSwapScreen> {
     }
   }
 
+  Future<void> _capturePhoto() async {
+    final file = await _mediaService.capturePhoto();
+    if (file != null) {
+      setState(() {
+        _inputImage = file;
+        _swappedImage = null;
+      });
+    }
+  }
+
   Future<void> _selectFace(BuildContext context) async {
     final gallery = Provider.of<GalleryService>(context, listen: false);
-    if (gallery.faceImages.isNotEmpty) {
+    if (gallery.faceImages.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No faces in gallery. Please upload.')));
+      return;
+    }
+    final picked = await showDialog<File?>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: const Text('Select a Face'),
+        children: gallery.faceImages.map((file) => SimpleDialogOption(
+          onPressed: () => Navigator.pop(context, file),
+          child: Image.file(file, width: 64, height: 64, fit: BoxFit.cover),
+        )).toList(),
+      ),
+    );
+    if (picked != null) {
       setState(() {
-        _selectedFace = gallery.faceImages.first;
+        _selectedFace = picked;
         _swappedImage = null;
       });
     }
   }
 
   Future<void> _swapFace() async {
-    if (_inputImage == null || _selectedFace == null) return;
+    if (_inputImage == null || _selectedFace == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a photo and a face.')));
+      return;
+    }
     final inputBytes = await _inputImage!.readAsBytes();
     final faceBytes = await _selectedFace!.readAsBytes();
     img.Image? inputImg = img.decodeImage(inputBytes);
     img.Image? faceImg = img.decodeImage(faceBytes);
     if (inputImg == null || faceImg == null) return;
-    // Resize face to 1/3 of input width
     final resizedFace = img.copyResize(faceImg, width: (inputImg.width / 3).round());
-    // Overlay face at center
     final x = (inputImg.width - resizedFace.width) ~/ 2;
     final y = (inputImg.height - resizedFace.height) ~/ 2;
     img.copyInto(inputImg, resizedFace, dstX: x, dstY: y, blend: true);
@@ -70,8 +95,8 @@ class _FaceSwapScreenState extends State<FaceSwapScreen> {
 
   Future<void> _saveOrShare() async {
     if (_swappedImage != null) {
-      await WatermarkUtil.addWatermarkToImage(_swappedImage!);
-      await _mediaService.shareMedia(_swappedImage!);
+      final watermarked = await WatermarkUtil.addWatermarkToImage(_swappedImage!);
+      await _mediaService.shareMedia(watermarked);
     }
   }
 
@@ -88,7 +113,11 @@ class _FaceSwapScreenState extends State<FaceSwapScreen> {
               children: [
                 ElevatedButton(
                   onPressed: _pickPhoto,
-                  child: const Text('Upload/Capture Photo'),
+                  child: const Text('Upload Photo'),
+                ),
+                ElevatedButton(
+                  onPressed: _capturePhoto,
+                  child: const Text('Capture Photo'),
                 ),
                 ElevatedButton(
                   onPressed: () => _selectFace(context),
